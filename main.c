@@ -1,22 +1,18 @@
 #include "get_gravatar.h"
-#include<stdio.h>
 
 int main(int argc, char **argv)
 {
+    GMainLoop *main_loop = NULL;
     g_type_init();
     gchar *email, *hash;
     SoupBuffer *response;
 
-    FILE *outputfile=fopen("avatar", "wb");
-    if(!outputfile)
-    {
-        printf("Error trying to open file.");
-        return -1;
-    }
-
-    hash = get_hash(argv[1]);
-    response = get_image(hash);
-    fwrite(response->data, 1, response->length, outputfile);
+    
+    main_loop = g_main_loop_new (NULL, TRUE);
+    hash = get_hash (argv[1]);
+    get_image (hash, main_loop);
+    g_main_loop_run (main_loop);
+    g_main_loop_unref (main_loop);
 
     return 0;
 }
