@@ -4,38 +4,49 @@
 gchar*
 get_hash (gchar *email)
 {
-    gchar *end, *hash;
+    gchar  *hash, *copy;
 
-    /* Trim leading and trailing whitespaces*/
-    while(g_ascii_isspace(*email))
-        email++;
-    if(*email == '\0')
-        return email;
-    end = email + strlen(email) - 1;
-    while(end > email && g_ascii_isspace(*end))
-        end--;
-    *(end+1) = '\0';
+    copy = g_strdup(email);
+    copy = g_strstrip(copy);
 
-    hash = g_compute_checksum_for_string (G_CHECKSUM_MD5, email, -1);
+    hash = g_compute_checksum_for_string (G_CHECKSUM_MD5, copy, -1);
+    g_free(copy);
     return hash;
 }
 
-SoupBuffer*
-get_image (gchar *hash)
+void
+message_callback(SoupSession *session, SoupMessage *msg,gpointer loop)
 {
-    gchar url[200];
+    SoupBuffer *buffer;
+    FILE *outputfile = fopen ("avatar", "wb");
+    if (!outputfile)
+    {
+        return;
+    }
+
+    if (msg->status_code != 200)
+    {
+        printf ("HTTP error!\n");
+        return ;
+    }
+
+    buffer = soup_message_body_flatten (msg->response_body);
+    fwrite (buffer->data, 1, buffer->length, outputfile);
+    g_main_quit ((GMainLoop *) loop);
+}
+
+void
+get_image (gchar *hash, GMainLoop *main_loop)
+{
+    gchar *url;
     SoupSession *session;
     SoupMessage *msg;
     SoupMessageBody *body;
     SoupBuffer *buffer;
 
-    g_strlcpy(url, "http://www.gravatar.com/avatar/", 200);
-    g_strlcat(url, hash, 200);
+    url = g_strdup_printf ("http://www.gravatar.com/avatar/%s", hash);
 
     session = soup_session_async_new ();
-    msg = soup_message_new("GET", url);
-    soup_session_send_message (session, msg);
-
-    buffer = soup_message_body_flatten (msg->response_body);
-    return buffer;
+    msg = soup_message_new ("GET", url);
+    soup_session_queue_message (session, msg, message_callback, main_loop);
 }
