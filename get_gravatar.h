@@ -3,9 +3,10 @@
 
 #include<glib.h>
 #include<libsoup/soup.h>
+#include<stdio.h>
 
 gchar* get_hash (gchar *str);
-
-SoupBuffer* get_image (gchar *hash);
+void message_callback (SoupSession *session, SoupMessage *msg, gpointer data);
+void get_image (gchar *hash, GMainLoop *loop);
 
 #endif
