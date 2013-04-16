@@ -11,6 +11,7 @@ get_hash (gchar *email)
 
     hash = g_compute_checksum_for_string (G_CHECKSUM_MD5, copy, -1);
     g_free(copy);
+
     return hash;
 }
 
@@ -21,6 +22,7 @@ message_callback(SoupSession *session, SoupMessage *msg,gpointer loop)
     FILE *outputfile = fopen ("avatar", "wb");
     if (!outputfile)
     {
+        g_main_quit ((GMainLoop *) loop);
         return;
     }
 
